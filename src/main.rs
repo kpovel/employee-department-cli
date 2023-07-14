@@ -42,7 +42,7 @@ impl Company {
 
     fn print_department_employee(&self, department_name: String) {
         match self.department.get(&department_name) {
-            Some(people) => println!("{}", people.join(", ")),
+            Some(people) => println!("{}: {}", department_name, people.join(", ")),
             None => println!("There are not such department"),
         };
     }
@@ -56,23 +56,27 @@ fn main() {
     };
 
     loop {
-        let input = handle_input();
-        company.process_input(input);
+        let input = take_input();
+        let input_command = handle_input(input);
+        company.process_input(input_command);
     }
 }
 
-fn handle_input() -> InputCommand {
+fn take_input() -> String {
     let mut command = String::new();
-    match io::stdin().read_line(&mut command) {
-        Ok(_) => println!("Command: {}", command),
-        Err(_) => println!("Your input sucks, try it again"),
-    };
+    io::stdin()
+        .read_line(&mut command)
+        .expect("Your input sucks, try it again");
 
+    return command.trim().to_string();
+}
+
+fn handle_input(command: String) -> InputCommand {
     let split_command = command.split_whitespace().collect::<Vec<&str>>();
-    let is_add_people = *split_command.get(0).unwrap_or(&"Nope") == "Add"
-        && *split_command.get(2).unwrap_or(&"Nope") == "to";
+    let is_add_people =
+        *split_command.get(0).unwrap() == "Add" && *split_command.get(2).unwrap() == "to";
 
-    if command.trim() == "Retrieve a list of all people in the company" {
+    if command == "Retrieve a list of all people in the company" {
         return InputCommand::PrintAllPeople;
     } else if command.starts_with("Retrieve a list of all people in") {
         return match split_command.last() {
