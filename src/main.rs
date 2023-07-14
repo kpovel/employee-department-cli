@@ -3,8 +3,8 @@ use std::{collections::HashMap, io};
 #[derive(Debug)]
 enum InputCommand {
     InsertPeople { department: String, name: String },
-    RetrieveDepartmentPeople { department: String },
-    RetrieveAllPeople,
+    PrintDepartmentPeople { department: String },
+    PrintAllPeople,
     UnknownCommand,
 }
 
@@ -18,10 +18,10 @@ impl Company {
             InputCommand::InsertPeople { department, name } => {
                 self.add_employee_to_department(department, name)
             }
-            InputCommand::RetrieveDepartmentPeople { department } => {
-                self.print_department_employee_list(department)
+            InputCommand::PrintDepartmentPeople { department } => {
+                self.print_department_employee(department)
             }
-            InputCommand::RetrieveAllPeople => self.print_company_employee(),
+            InputCommand::PrintAllPeople => self.print_company_employee(),
             InputCommand::UnknownCommand => {
                 println!("Your command sucks, try it again")
             }
@@ -31,22 +31,18 @@ impl Company {
     fn add_employee_to_department(&mut self, department: String, employee_name: String) {
         let department = self.department.entry(department).or_insert(vec![]);
         department.push(employee_name);
+        department.sort();
     }
 
-    fn print_company_employee(&mut self) {
-        for dep in self.department.iter_mut() {
-            dep.1.sort();
-
+    fn print_company_employee(&self) {
+        for dep in self.department.iter() {
             println!("{}: {}", dep.0, dep.1.join(", "))
         }
     }
 
-    fn print_department_employee_list(&mut self, department_name: String) {
-        match self.department.get_mut(&department_name) {
-            Some(people) => {
-                people.sort();
-                println!("{}", people.join(", "))
-            }
+    fn print_department_employee(&self, department_name: String) {
+        match self.department.get(&department_name) {
+            Some(people) => println!("{}", people.join(", ")),
             None => println!("There are not such department"),
         };
     }
@@ -77,20 +73,17 @@ fn handle_input() -> InputCommand {
         && *split_command.get(2).unwrap_or(&"Nope") == "to";
 
     if command.trim() == "Retrieve a list of all people in the company" {
-        return InputCommand::RetrieveAllPeople;
+        return InputCommand::PrintAllPeople;
     } else if command.starts_with("Retrieve a list of all people in") {
         return match split_command.last() {
-            Some(&department) => InputCommand::RetrieveDepartmentPeople {
+            Some(&department) => InputCommand::PrintDepartmentPeople {
                 department: String::from(department),
             },
             None => InputCommand::UnknownCommand,
         };
     } else if is_add_people {
         return InputCommand::InsertPeople {
-            department: split_command
-                .get(3)
-                .unwrap_or(&"Engineering")
-                .to_string(),
+            department: split_command.get(3).unwrap_or(&"Engineering").to_string(),
             name: split_command.get(1).unwrap_or(&"Default").to_string(),
         };
     }
